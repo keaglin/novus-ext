@@ -1,0 +1,36 @@
+{
+	"manifest_version": 3,
+	"version": "3.0",
+	"name": "Novus",
+	"description": "Analyze suspicious messages in seconds 🔎",
+	"icons": {
+		"48": "public/48.png",
+		"96": "public/96.png"
+	},
+	"action": {
+		"default_popup": "index.html",
+		"default_title": "Analyze suspicious messages in seconds 🔎",
+		"command": "Analyze-text"
+	},
+	"permissions": [
+		"contextMenus",
+		"activeTab",
+		"scripting",
+		"downloads",
+		"background"
+	],
+	"content_scripts": [
+		{
+			"js": [
+				"src/contentScript.ts"
+			],
+			"matches": [
+				"<all_urls>"
+			]
+		}
+	],
+	"background": {
+		"service_worker": "src/background.ts",
+		"type": "module"
+	}
+}
