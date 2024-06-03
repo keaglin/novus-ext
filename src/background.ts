@@ -12,7 +12,7 @@
 
 // background.js
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, _sendResponse) => {
   console.table(message)
   if (message.type === 'INITIAL_CONTENT' || message.type === 'CONTENT_DIFF') {
     const content = message.data;
