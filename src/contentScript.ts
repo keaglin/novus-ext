@@ -26,7 +26,7 @@ function scrollHandler() {
   }
 }
 
-window.addEventListener('scroll', scrollHandler);
+// window.addEventListener('scroll', scrollHandler);
 
 function getViewportContent() {
   const viewportHeight = window.innerHeight;
@@ -53,6 +53,9 @@ function debounce<T extends (...args: any[]) => void>(func: T, wait: number): (.
   };
 }
 
+const pageData = getPageContentAndMetadata()
+chrome.runtime.sendMessage({ type: 'PAGE_DATA', data: pageData })
+
 // Listen for messages from the background script
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === 'BRAND_NAME_FOUND') {
@@ -69,23 +72,32 @@ function alertUser() {
 }
 
 // Function to extract all webpage content and metadata
-// function getPageContentAndMetadata() {
-//   const content = document.body.innerText;
-//   const links = Array.from(document.querySelectorAll('a')).map(link => ({
-//     text: link.innerText,
-//     href: link.href
-//   }));
-//   const metadata = Array.from(document.querySelectorAll('meta')).map(meta => ({
-//     name: meta.name,
-//     content: meta.content
-//   }));
-//   const scripts = Array.from(document.querySelectorAll('script')).map(script => ({
-//     src: script.src,
-//     innerHTML: script.innerHTML
-//   }));
+function getPageContentAndMetadata() {
+  // we can use this to make a manual cache
+  // and only send the diffs to the background script
+  // when the cache expires
+  // it also gives us an opportunity to let the user manually refresh
+  // the cache if they want to
+  const pageUrl = window.location.href
+  const content = document.body.innerText;
+  const links = Array.from(document.querySelectorAll('a')).map(link => ({
+    text: link.innerText,
+    href: link.href
+  }));
+  const metadata = Array.from(document.querySelectorAll('meta')).map(meta => ({
+    name: meta.name,
+    property: meta.getAttribute('property'),
+    content: meta.content
+  }));
+  const scripts = Array.from(document.querySelectorAll('script')).map(script => ({
+    src: script.src,
+    innerHTML: script.innerHTML
+  }));
 
-//   return { content, links, metadata, scripts };
-// }
+  return { content, links, metadata, pageUrl, scripts };
+}
+
+
 
 
 

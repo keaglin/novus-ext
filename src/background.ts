@@ -15,49 +15,62 @@
 
 chrome.runtime.onMessage.addListener(async (message, sender, _sendResponse) => {
   console.table(message)
-  let content
-  if (message.type === 'INITIAL_CONTENT') {
-    content = message.data
-    console.log('content', content)
+  // let content
+  // if (message.type === 'INITIAL_CONTENT') {
+  //   content = message.data
+  //   console.log('content', content)
+  // }
+
+  // if (message.type === 'CONTENT_DIFF') {
+  //   const diffs = message.data;
+  //   content = getAddedContent(diffs);
+  //   console.log('Added content:', content);
+  // }
+
+  // if (!content || !content.length) return
+
+
+  // if (Array.isArray(content)) content = content[0]
+
+  // console.log('content from bg script', content)
+
+  if (message.type === 'PAGE_DATA') {
+    const pageData = message.data
+    console.log('pageData from background.ts', pageData)
+
+    // call server endpoint to get openai completion - debounce this?
+    try {
+      const res = await fetch('http://novus.local:3000/api/v1/analyze-content', {
+        method: 'post',
+        body: JSON.stringify({
+          pageData
+        })
+      }).then(res => res.json())
+      console.log('res', res)
+    } catch (error) {
+      console.error('something went wrong', error)
+    }
   }
 
-  if (message.type === 'CONTENT_DIFF') {
-    const diffs = message.data;
-    content = getAddedContent(diffs);
-    console.log('Added content:', content);
-  }
-
-  // call server endpoint to get openai completion - debounce this?
-  try {
-    const res = await fetch('https://parakeet-integral-cheaply.ngrok-free.app/api/v1/analyze-content', {
-      method: 'post',
-      body: JSON.stringify({
-        content
-      })
-    })
-    console.log('res', res)
-  } catch (error) {
-    console.error('something went wrong', error)
-  }
 
 
 
 
   // Process the content to find mentions of "Brand Name"
-  const brandNameFound = content.some((diff: string) => {
-    console.log('diff', diff)
-    return diff.toLowerCase().includes('google')
-  });
+  // const brandNameFound = content.some((diff: string) => {
+  //   console.log('diff', diff)
+  //   return diff.toLowerCase().includes('google')
+  // });
 
-  if (brandNameFound) {
-    // Send a message back to the content script
-    chrome.tabs.sendMessage(sender.tab?.id, { type: 'BRAND_NAME_FOUND' });
+  // if (brandNameFound) {
+  // Send a message back to the content script
+  // chrome.tabs.sendMessage(sender.tab?.id, { type: 'BRAND_NAME_FOUND' });
 
-    // Change the extension icon to alert the user
-    // chrome.action.setIcon({ path: 'assets/icon-alert.png', tabId: sender.tab?.id });
-    chrome.action.setBadgeText({ text: '!', tabId: sender.tab?.id });
-    chrome.action.setBadgeBackgroundColor({ color: '#FF0000', tabId: sender.tab?.id });
-  }
+  // Change the extension icon to alert the user
+  // chrome.action.setIcon({ path: 'assets/icon-alert.png', tabId: sender.tab?.id });
+  //   chrome.action.setBadgeText({ text: '!', tabId: sender.tab?.id });
+  //   chrome.action.setBadgeBackgroundColor({ color: '#FF0000', tabId: sender.tab?.id });
+  // }
 
   // Show a notification
   chrome.notifications.create({
