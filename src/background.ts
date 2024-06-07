@@ -1,5 +1,3 @@
-
-
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.type === 'CHECK_ACTIVE_TAB') {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -17,7 +15,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     console.table(message);
     const content = message.data;
 
-    // call server endpoint to get openai completion - debounce this?
     try {
       const analysis = await fetch('http://novus.local:3000/api/v1/analyze-content', {
         method: 'post',
@@ -25,7 +22,6 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
         headers: { 'Content-Type': 'application/json' }
       }).then(res => res.json())
       console.log('res', analysis);
-
     } catch (error) {
       console.error('something went wrong', error);
     }
@@ -46,5 +42,3 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     }
   }
 });
-
-
