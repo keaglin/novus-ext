@@ -1,11 +1,14 @@
 // Request active tab status
 chrome.runtime.sendMessage({ type: 'CHECK_ACTIVE_TAB' }, (response) => {
-  if (response.isActive) {
-
+  console.log('CHECK_ACTIVE_TAB response:', response);
+  if (response && response.isActive) {
     const pageData = getPageContentAndMetadata();
     chrome.runtime.sendMessage({ type: 'PAGE_DATA', data: pageData });
+  } else {
+    console.error('Active tab check failed or response is undefined');
   }
 });
+
 
 // Get the full page content and metadata
 function getPageContentAndMetadata() {
@@ -31,14 +34,7 @@ function getPageContentAndMetadata() {
 // Listen for messages from the background script
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === 'ANALYSIS_COMPLETE') {
-    // Change the extension icon to alert the user
-    alertUser();
-    // Optionally, open the popup
-    // chrome.runtime.sendMessage({ type: 'OPEN_POPUP' });
+    // Forward the analysis data to the React app
+    window.postMessage({ type: 'ANALYSIS_COMPLETE', data: message.data }, '*');
   }
 });
-
-function alertUser() {
-  // For example, you could display an alert or highlight the content
-  console.log('Brand Name found on this page!');
-}

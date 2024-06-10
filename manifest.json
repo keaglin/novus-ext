@@ -17,7 +17,8 @@
 		"activeTab",
 		"scripting",
 		"downloads",
-		"background"
+		"background",
+		"tabs"
 	],
 	"content_scripts": [
 		{

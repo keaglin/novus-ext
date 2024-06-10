@@ -1,4 +1,5 @@
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+
   if (message.type === 'CHECK_ACTIVE_TAB') {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       const activeTab = tabs[0];
@@ -15,16 +16,18 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     console.table(message);
     const content = message.data;
 
-    try {
-      const analysis = await fetch('http://novus.local:3000/api/v1/analyze-content', {
-        method: 'post',
-        body: JSON.stringify({ content }),
-        headers: { 'Content-Type': 'application/json' }
-      }).then(res => res.json())
-      console.log('res', analysis);
-    } catch (error) {
-      console.error('something went wrong', error);
-    }
+    // try {
+    const analysis = fetch('http://novus.local:3000/api/v1/analyze-content', {
+      method: 'post',
+      body: JSON.stringify({ content }),
+      headers: { 'Content-Type': 'application/json' }
+    })
+      .then(res => res.json())
+      .catch(error => console.error('something went wrong', error));
+    console.log('res', analysis);
+    // } catch (error) {
+    // console.error('something went wrong', error);
+    // }
 
     // Process the content to find mentions of "Brand Name"
     const brandNameFound = content.some((diff: string) => {
@@ -33,12 +36,16 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     });
 
     if (brandNameFound) {
-      // Send a message back to the content script
-      chrome.tabs.sendMessage(sender.tab?.id, { type: 'BRAND_NAME_FOUND' });
+      const tabId = sender.tab?.id;
+      if (tabId !== undefined) {
+        // Send a message back to the content script
+        chrome.tabs.sendMessage(tabId, { type: 'BRAND_NAME_FOUND' });
 
-      // Change the extension icon to alert the user
-      chrome.action.setBadgeText({ text: '!', tabId: sender.tab?.id });
-      chrome.action.setBadgeBackgroundColor({ color: '#FF0000', tabId: sender.tab?.id });
+        // Change the extension icon to alert the user
+        chrome.action.setBadgeText({ text: '!', tabId: tabId });
+        chrome.action.setBadgeBackgroundColor({ color: '#FF0000', tabId: tabId });
+      }
     }
   }
-});
+}
+);
