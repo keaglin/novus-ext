@@ -1,29 +1,34 @@
-// import { useState, useEffect } from "react";
+import { useEffect, useState } from 'react';
 
-function App() {
-  // const [data, setData] = useState(null);
+const App = () => {
+  const [analysis, setAnalysis] = useState(null);
 
-  // useEffect(() => {
-  //   fetch('http://swapi.dev/api/planets/1/')
-  //     .then(response => response.json())
-  //     .then(data => setData(data))
-  //     .catch(error => console.error('error', error))
-  // }, []);
+  useEffect(() => {
+    // Retrieve the analysis from chrome.storage
+    chrome.storage.local.get('analysis', (result) => {
+      if (result.analysis) {
+        setAnalysis(result.analysis);
+      }
+    });
+  }, []);
 
-  // if (!data) return <div>Loading...</div>;
-
-  // return <div>Data: {data}</div>;
-
-  // console.log('data', data)
-
-
+  const checkStorage = () => {
+    chrome.storage.local.get('analysis', (result) => {
+      console.log('Stored analysis:', result.analysis);
+    });
+  };
 
   return (
-    <>
-      {/* <div>Data: {data?.name}</div> */}
-      Novus is running
-    </>
-  )
-}
+    <div>
+      <h1>Analysis Result</h1>
+      {analysis ? (
+        <pre>{JSON.stringify(analysis, null, 2)}</pre>
+      ) : (
+        <p>No analysis data available.</p>
+      )}
+      <button onClick={checkStorage}>Check Storage</button>
+    </div>
+  );
+};
 
-export default App
+export default App;

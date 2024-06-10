@@ -14,38 +14,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'PAGE_DATA') {
     console.table(message);
-    const content = message.data;
+    const pageData = message.data;
 
-    // try {
-    const analysis = fetch('http://novus.local:3000/api/v1/analyze-content', {
+    fetch('http://novus.local:3000/api/v1/analyze-content', {
       method: 'post',
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ pageData }),
       headers: { 'Content-Type': 'application/json' }
     })
       .then(res => res.json())
+      .then(analysis => {
+        // Store the analysis in chrome.storage
+        chrome.storage.local.set({ analysis }, () => {
+          console.log('Analysis stored in chrome.storage', analysis);
+
+          // Check if there's an issue in the analysis
+          if (analysis.issueDetected) {
+            // Open the extension's popup window
+            chrome.action.openPopup();
+          }
+
+          sendResponse({ analysis });
+        });
+      })
       .catch(error => console.error('something went wrong', error));
-    console.log('res', analysis);
-    // } catch (error) {
-    // console.error('something went wrong', error);
-    // }
 
-    // Process the content to find mentions of "Brand Name"
-    const brandNameFound = content.some((diff: string) => {
-      console.log('diff', diff);
-      return diff.toLowerCase().includes('google');
-    });
-
-    if (brandNameFound) {
-      const tabId = sender.tab?.id;
-      if (tabId !== undefined) {
-        // Send a message back to the content script
-        chrome.tabs.sendMessage(tabId, { type: 'BRAND_NAME_FOUND' });
-
-        // Change the extension icon to alert the user
-        chrome.action.setBadgeText({ text: '!', tabId: tabId });
-        chrome.action.setBadgeBackgroundColor({ color: '#FF0000', tabId: tabId });
-      }
-    }
+    return true; // Keep the message channel open for sendResponse
   }
-}
-);
+});
