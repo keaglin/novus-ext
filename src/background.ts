@@ -23,17 +23,20 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     })
       .then(res => res.json())
       .then(analysis => {
-        // Store the analysis in chrome.storage
-        chrome.storage.local.set({ analysis }, () => {
-          console.log('Analysis stored in chrome.storage', analysis);
+        // Extract and parse the content key
+        const parsedContent = JSON.parse(analysis.content);
+
+        // Store the parsed content in chrome.storage
+        chrome.storage.local.set({ analysis: parsedContent }, () => {
+          console.log('Analysis stored in chrome.storage', parsedContent);
 
           // Check if there's an issue in the analysis
-          if (analysis.issueDetected) {
+          if (parsedContent.analysis.sentimentAnalysis.sentimentScore > 0.7) {
             // Open the extension's popup window
             chrome.action.openPopup();
           }
 
-          sendResponse({ analysis });
+          sendResponse({ analysis: parsedContent });
         });
       })
       .catch(error => console.error('something went wrong', error));

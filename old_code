@@ -1,0 +1,110 @@
+// ~~~~~~~~~~~~~ contentScript.ts ~~~~~~~~~~~~~
+// explore this when you notice performance issues
+const debouncedScrollHandler = debounce(() => scrollHandler, 300); // Adjust the debounce delay as needed
+
+function scrollHandler() {
+  const currentContent = getViewportContent();
+  if (currentContent !== previousContent) {
+    const diffs = dmp.diff_main(previousContent, currentContent);
+    dmp.diff_cleanupSemantic(diffs);
+
+    // Send diffs to background script
+    chrome.runtime.sendMessage({ type: 'CONTENT_DIFF', data: diffs });
+
+    previousContent = currentContent;
+  }
+}
+// window.addEventListener('scroll', scrollHandler);
+
+// Debounce function
+function debounce<T extends (...args: any[]) => void>(func: T, wait: number): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout>;
+
+  return function (...args: Parameters<T>) {
+    clearTimeout(timeout);
+    // @ts-expect-error: need to fix types
+    timeout = setTimeout(() => func.apply(this, args), wait);
+  };
+}
+
+function getViewportContent() {
+  const viewportHeight = window.innerHeight;
+  const elements = document.elementsFromPoint(viewportHeight / 2, viewportHeight / 2);
+
+  let textContent = '';
+  elements.forEach((element) => {
+    if (element instanceof HTMLElement && element.offsetParent !== null) {
+      textContent += element.innerText;
+    }
+  });
+
+  return textContent;
+}
+
+// Initialize the web worker
+// const worker = new Worker(chrome.runtime.getURL('worker.js'));
+
+// worker.onmessage = function (event) {
+//   const { linkComparisons, sentiment, maliciousScripts } = event.data;
+//   // Handle the processed content (e.g., send it to the background script)
+//   chrome.runtime.sendMessage({
+//     type: 'PROCESSED_CONTENT',
+//     data: { linkComparisons, sentiment, maliciousScripts }
+//   });
+// };
+
+function alertUser() {
+  // For example, you could display an alert or highlight the content
+  console.log('Brand Name found on this page!');
+}
+
+
+// ~~~~~~~~~~~ background.ts ~~~~~~~~~~~
+// chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+//   if (request.action === 'getWebpageContent') {
+//     // Save the text content to a file
+//     chrome.downloads.download({
+//       filename: `${Date.now()}.txt`,
+//       conflictAction: 'uniquify',
+//       saveAs: true,
+//       url: `data:text/plain;charset=utf-8,${encodeURIComponent(request.content)}`
+//     });
+//   }
+// });
+
+chrome.runtime.onMessage.addListener(async (message, sender, _sendResponse) => {
+  console.table(message)
+  // let content
+  // if (message.type === 'INITIAL_CONTENT') {
+  //   content = message.data
+  console.log('content', content)
+}
+)
+
+function getAddedContent(diffs: [number, string][]): string[] {
+  return diffs
+    .filter(diff => diff[0] === 1) // Filter to get only the tuples with a 1
+    .map(diff => diff[1]);         // Extract the content from these tuples
+}
+
+// Show a notification
+chrome.notifications.create({
+  type: 'basic',
+  iconUrl: 'icon.png',
+  title: 'Scam Alert',
+  message: 'Potential scam detected. Click to learn more.',
+  buttons: [{ title: 'Learn More' }],
+  priority: 0
+});
+
+// Handle notification click
+chrome.notifications.onClicked.addListener(() => {
+  chrome.tabs.create({ url: chrome.runtime.getURL('popup.html') });
+});
+}
+
+
+// // Listen for a message to open the popup
+// if (message.type === 'OPEN_POPUP') {
+//   chrome.action.openPopup();
+// }
